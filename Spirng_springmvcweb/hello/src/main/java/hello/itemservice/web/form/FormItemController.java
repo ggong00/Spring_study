@@ -1,20 +1,17 @@
 package hello.itemservice.web.form;
 
-import hello.itemservice.domain.item.DeliveryCode;
-import hello.itemservice.domain.item.Item;
-import hello.itemservice.domain.item.ItemRepository;
-import hello.itemservice.domain.item.ItemType;
+import hello.itemservice.domain.item.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import javax.swing.plaf.synth.Region;
+import java.util.*;
 
 @Slf4j
 @Controller
@@ -23,28 +20,56 @@ import java.util.Map;
 public class FormItemController {
 
     private final ItemRepository itemRepository;
+    private final InputCategory inputCategory;
 
     @ModelAttribute("regions")
-    public Map<String, String> regions() {
-        Map<String, String> regions = new LinkedHashMap<>();
-        regions.put("SEOUL", "서울");
-        regions.put("BUSAN", "부산");
-        regions.put("JEJU", "제주");
+    public Map<String, String> regions(Locale locale) {
+        Map<String, String> regions = null;
+
+        if (locale.equals(Locale.KOREAN)) {
+            regions = inputCategory.getRegions();
+        } else {
+            regions = inputCategory.getRegions_en();
+        }
 
         return regions;
     }
 
     @ModelAttribute("itemTypes")
-    public ItemType[] itemTypes() {
-        return ItemType.values();
+    public ItemType[] itemTypes(Locale locale) {
+        ItemType[] temp = inputCategory.getItemTypes();
+        ItemType[] itemTypes = new ItemType[temp.length/2];
+        int i = 0;
+
+        if (locale.equals(Locale.KOREAN)) {
+            for (ItemType itemType : temp) {
+                if (!itemType.name().contains("_EN")) {
+                    itemTypes[i] = itemType;
+                    i++;
+                }
+            }
+
+        } else {
+            for (ItemType itemType : temp) {
+                if (itemType.name().contains("_EN")) {
+                    itemTypes[i] = itemType;
+                    i++;
+                }
+            }
+        }
+        log.debug("itemType값 {}" , itemTypes);
+        return itemTypes;
     }
 
     @ModelAttribute("deliveryCodes")
-    public List<DeliveryCode> deliveryCodes() {
-        List<DeliveryCode> deliveryCodes = new ArrayList<>();
-        deliveryCodes.add(new DeliveryCode("FAST", "빠른 배송"));
-        deliveryCodes.add(new DeliveryCode("NORMAL", "일반 배송"));
-        deliveryCodes.add(new DeliveryCode("SLOW", "느린 배송"));
+    public List<DeliveryCode> deliveryCodes(Locale locale) {
+        List<DeliveryCode> deliveryCodes = null;
+
+        if (locale.equals(Locale.KOREAN)) {
+            deliveryCodes= inputCategory.getDeliveryCodes();
+        } else {
+            deliveryCodes = inputCategory.getDeliveryCodes_en();
+        }
 
         return deliveryCodes;
     }
@@ -58,7 +83,7 @@ public class FormItemController {
     }
 
     @GetMapping("/{itemId}")
-    public String item(@PathVariable Long itemId, Model model) {
+    public String item(@PathVariable Long itemId, Model model, Locale locale) {
         Item item = itemRepository.findById(itemId);
         model.addAttribute("item", item);
 
@@ -66,8 +91,9 @@ public class FormItemController {
     }
 
     @GetMapping("/add")
-    public String DirectAddForm(Model model) {
+    public String DirectAddForm(Model model,Locale locale) {
         Item item = new Item();
+        log.debug("언어분류 {} " , locale);
         model.addAttribute("item", item);
 
         return "form/addForm";
@@ -77,6 +103,7 @@ public class FormItemController {
     public String AddItem(@ModelAttribute Item item, RedirectAttributes redirectAttributes) {
         log.debug("open.value = {} ", item.getOpen());
         log.debug("item.regions = {} ", item.getRegions());
+        log.debug("item.type = {} ", item.getItemType());
 
         Item savedItem = itemRepository.save(item);
         redirectAttributes.addAttribute("itemId", savedItem.getId());
@@ -87,7 +114,7 @@ public class FormItemController {
 
 
     @GetMapping("/{itemId}/edit")
-    public String DirectEditForm(@PathVariable Long itemId, Model model) {
+    public String DirectEditForm(@PathVariable Long itemId, Model model, Locale locale) {
         Item item = itemRepository.findById(itemId);
         model.addAttribute("item", item);
 
