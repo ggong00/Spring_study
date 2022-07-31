@@ -16,13 +16,13 @@ class ItemRepositoryTest {
     ItemRepository repository = ac.getBean("itemRepository", ItemRepository.class);
 
     @AfterEach
-    void afterEach () {
+    void afterEach() {
         repository.clearStore();
     }
 
     @DisplayName("상품 저장")
     @Test
-    void save () {
+    void save() {
         //given
         Item itemA = new Item("itemA", 10000, 10);
 
@@ -35,7 +35,7 @@ class ItemRepositoryTest {
 
     @DisplayName("전체상품 조회")
     @Test
-    void findAll () {
+    void findAll() {
         //given
         Item item1 = new Item("item1", 10000, 10);
         Item item2 = new Item("item2", 20000, 5);
@@ -52,14 +52,14 @@ class ItemRepositoryTest {
 
     @DisplayName("상품정보 수정")
     @Test
-    void update () {
+    void update() {
         //given
         Item item1 = new Item("item1", 10000, 10);
         repository.save(item1);
         Item updateParam = new Item("item2", 20000, 5);
 
         //when
-        repository.update(item1.getId(),updateParam);
+        repository.update(item1.getId(), updateParam);
         Item updatedItem = repository.findById(item1.getId());
 
         //then
